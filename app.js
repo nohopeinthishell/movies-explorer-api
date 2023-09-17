@@ -2,29 +2,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { errors } = require('celebrate');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const router = require('./routes');
-const auth = require('./middlewares/auth');
 
-const { PORT = 3000 } = process.env;
+const { NODE_ENV, PORT = 3000, DB_CONNECTION_STRING } = process.env;
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-});
-
-const {
-  createUser,
-  login,
-} = require('./controllers/users');
-const NotFoundError = require('./errors/notFoundError');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const errorHandler = require('./middlewares/errror-handler');
-const { registerValidation, loginValidation } = require('./validation/validation');
+const limiter = require('./utils/limiter');
 
 mongoose
-  .connect('mongodb://127.0.0.1:27017/moviedb', {
+  .connect(NODE_ENV === 'production' ? DB_CONNECTION_STRING : 'mongodb://127.0.0.1:27017/bitfilmsdb', {
     useNewUrlParser: true,
   })
   .then(() => {
@@ -41,16 +29,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(requestLogger);
 
-app.post('/signin', loginValidation, login);
-app.post('/signup', registerValidation, createUser);
-
-app.use(auth);
-
 app.use(router);
-
-app.use('*', (req, res, next) => {
-  next(new NotFoundError('Страница не найдена'));
-});
 
 app.use(errorLogger);
 
