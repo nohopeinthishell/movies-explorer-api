@@ -51,7 +51,7 @@ const deleteMovie = (req, res, next) => {
       if (card.owner.toString() !== req.user._id) {
         return next(new ForbiddenError('Вы не можете удалить чужой сохраненный фильм'));
       }
-      return movieSchema.findByIdAndDelete(req.params.cardId)
+      return movieSchema.findByIdAndDelete(req.params.movieId)
         .then(() => res.status(httpConstants.HTTP_STATUS_OK).send({ message: 'Фильм удален' }))
         .catch((err) => next(err));
     })
